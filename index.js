@@ -46,11 +46,61 @@ client.on('disconnected', (reason) => {
     }, 10000);
 });
 
+<<<<<<< HEAD
 // Evento cuando se genera el código QR
 client.on('qr', qr => {
     qrcode.generate(qr, {small: true});
     console.log('QR Code generado. Por favor escanee con WhatsApp.');
     saveQR(qr); // Llamar a la función para guardar el QR
+=======
+// Variable global para almacenar el último QR
+let latestQR = '';
+
+// Función para que el bot guarde el QR
+const saveQR = (qr) => {
+    latestQR = qr;
+};
+
+// Exportar la función para que bot.js pueda acceder a ella
+module.exports.saveQR = saveQR;
+
+// Ruta para mostrar el QR en web
+app.get('/qr', (req, res) => {
+    if (!latestQR) {
+        return res.send('No hay código QR disponible aún. Espera un momento y recarga la página.');
+    }
+    
+    res.send(`
+        <html>
+            <head>
+                <title>Código QR de WhatsApp</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+                    .qr-container { max-width: 300px; margin: 0 auto; }
+                    img { max-width: 100%; height: auto; }
+                    .refresh { margin-top: 20px; }
+                    button { padding: 10px 20px; background-color: #25D366; color: white; border: none; border-radius: 5px; cursor: pointer; }
+                </style>
+            </head>
+            <body>
+                <h1>Escanea este código QR en WhatsApp</h1>
+                <div class="qr-container">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(latestQR)}&size=300x300" alt="WhatsApp QR Code">
+                </div>
+                <p>Si el código no funciona, intenta recargar la página o reiniciar el bot</p>
+                <div class="refresh">
+                    <button onclick="location.reload()">Recargar QR</button>
+                </div>
+            </body>
+        </html>
+    `);
+});
+
+// Prevenir que el proceso se detenga por errores no capturados
+process.on('uncaughtException', (err) => {
+    console.error('Error no capturado:', err);
+>>>>>>> f7d6eba64f695d0c599455f9fa5df260207c896d
 });
 
 // Evento cuando el cliente está listo
