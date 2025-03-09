@@ -129,12 +129,42 @@ async function abrirGrupo(msg) {
 
 async function enviarTarjeta(msg) {
     try {
-        // Aquí deberías tener la URL o el path de la tarjeta anclada
-        const tarjeta = MessageMedia.fromFilePath('./assets/tarjeta.jpg');
-        await msg.reply(tarjeta);
+        if (!msg.chat || !msg.chat.isGroup) {
+            return msg.reply('Este comando solo funciona en grupos.');
+        }
+        
+        const chat = await msg.getChat();
+        
+        // Intentar obtener mensajes anclados
+        if (!chat.pinned || chat.pinned.length === 0) {
+            return msg.reply('No hay mensajes anclados en este grupo.');
+        }
+        
+        // Obtener el primer mensaje anclado (generalmente la tarjeta)
+        const mensajeAnclado = chat.pinned[0];
+        
+        // Verificar si el mensaje existe
+        if (mensajeAnclado) {
+            // Reutilizar el contenido del mensaje anclado
+            const contenido = await client.getMessageById(mensajeAnclado);
+            if (contenido) {
+                // Si el mensaje anclado es una imagen
+                if (contenido.hasMedia) {
+                    const media = await contenido.downloadMedia();
+                    await msg.reply(media);
+                } else {
+                    // Si es un mensaje de texto
+                    await msg.reply(contenido.body);
+                }
+            } else {
+                msg.reply('No se pudo obtener el mensaje anclado.');
+            }
+        } else {
+            msg.reply('No se encontró el mensaje anclado.');
+        }
     } catch (error) {
         console.error('Error al enviar tarjeta:', error);
-        msg.reply('Error al enviar la tarjeta.');
+        msg.reply('Error al obtener la tarjeta anclada: ' + error.message);
     }
 }
 
