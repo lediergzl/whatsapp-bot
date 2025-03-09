@@ -61,21 +61,27 @@ client.on('ready', () => {
 
 // Manejar mensajes entrantes
 client.on('message', async msg => {
-    const command = msg.body.toLowerCase();
+    try {
+        if (!msg || !msg.body) return;
+        
+        const command = msg.body.toLowerCase();
 
-    // Comandos para administradores
-    if (await isAdmin(msg)) {
-        switch(command) {
-            case '!cerrar':
-                await cerrarGrupo(msg);
-                break;
-            case '!abrir':
-                await abrirGrupo(msg);
-                break;
-            case '!tarjeta':
-                await enviarTarjeta(msg);
-                break;
+        // Comandos para administradores
+        if (await isAdmin(msg)) {
+            switch(command) {
+                case '!cerrar':
+                    await cerrarGrupo(msg);
+                    break;
+                case '!abrir':
+                    await abrirGrupo(msg);
+                    break;
+                case '!tarjeta':
+                    await enviarTarjeta(msg);
+                    break;
+            }
         }
+    } catch (error) {
+        console.error('Error al procesar mensaje:', error);
     }
 });
 
@@ -83,7 +89,7 @@ client.on('message', async msg => {
 async function isAdmin(msg) {
     if (msg.fromMe) return true;
 
-    if (msg.chat.isGroup) {
+    if (msg.chat && msg.chat.isGroup) {
         const chat = await msg.getChat();
         const participant = chat.participants.find(p => p.id._serialized === msg.author);
         return participant?.isAdmin;
@@ -92,7 +98,7 @@ async function isAdmin(msg) {
 }
 
 async function cerrarGrupo(msg) {
-    if (!msg.chat.isGroup) return;
+    if (!msg.chat || !msg.chat.isGroup) return;
 
     try {
         const chat = await msg.getChat();
@@ -107,7 +113,7 @@ async function cerrarGrupo(msg) {
 }
 
 async function abrirGrupo(msg) {
-    if (!msg.chat.isGroup) return;
+    if (!msg.chat || !msg.chat.isGroup) return;
 
     try {
         const chat = await msg.getChat();
