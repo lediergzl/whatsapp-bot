@@ -2,6 +2,16 @@ const qrcode = require('qrcode-terminal');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
 const moment = require('moment');
 const cron = require('node-cron');
+let saveQR;
+
+// Intentar importar la función saveQR desde index.js
+try {
+    const index = require('./index.js');
+    saveQR = index.saveQR;
+} catch (error) {
+    console.log('No se pudo importar saveQR desde index.js');
+    saveQR = () => {}; // Función vacía como fallback
+}
 
 // Configurar el cliente de WhatsApp
 const client = new Client({
@@ -40,6 +50,7 @@ client.on('disconnected', (reason) => {
 client.on('qr', qr => {
     qrcode.generate(qr, {small: true});
     console.log('QR Code generado. Por favor escanee con WhatsApp.');
+    saveQR(qr); // Llamar a la función para guardar el QR
 });
 
 // Evento cuando el cliente está listo
@@ -51,7 +62,7 @@ client.on('ready', () => {
 // Manejar mensajes entrantes
 client.on('message', async msg => {
     const command = msg.body.toLowerCase();
-    
+
     // Comandos para administradores
     if (await isAdmin(msg)) {
         switch(command) {
@@ -71,7 +82,7 @@ client.on('message', async msg => {
 // Funciones de administración de grupos
 async function isAdmin(msg) {
     if (msg.fromMe) return true;
-    
+
     if (msg.chat.isGroup) {
         const chat = await msg.getChat();
         const participant = chat.participants.find(p => p.id._serialized === msg.author);
@@ -82,7 +93,7 @@ async function isAdmin(msg) {
 
 async function cerrarGrupo(msg) {
     if (!msg.chat.isGroup) return;
-    
+
     try {
         const chat = await msg.getChat();
         await chat.setSettings({
@@ -97,7 +108,7 @@ async function cerrarGrupo(msg) {
 
 async function abrirGrupo(msg) {
     if (!msg.chat.isGroup) return;
-    
+
     try {
         const chat = await msg.getChat();
         await chat.setSettings({
@@ -126,7 +137,7 @@ async function publicarResultados(grupos) {
     try {
         // Aquí deberías obtener los resultados de tu API o base de datos
         const resultados = await obtenerResultados();
-        
+
         for (const grupo of grupos) {
             const chat = await client.getChatById(grupo);
             await chat.sendMessage(`🎲 Resultados de Lotería\n${resultados}`);
