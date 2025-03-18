@@ -318,18 +318,18 @@ function processCommandMessage(sock, sender, message) {
                 message.message.extendedTextMessage?.text ||
                 "").trim().toLowerCase();
   if (!text.startsWith('!')) return;
-  
+
   // Comando para abrir el menú interactivo
   if (text === '!menu') {
     enviarMenuComandos(sock, chatId);
     return;
   }
-  
+
   // Si se ejecuta en grupo, se verifica el mensaje anclado en ese grupo
   if (chatId.endsWith('@g.us')) {
     checkPinnedMessage(sock, chatId);
   }
-  
+
   // Resto de comandos
   if (text.startsWith('!calc')) {
     comandos.calcular(sock, chatId, sender, text.substring(5).trim());
@@ -366,8 +366,9 @@ function processCommandMessage(sock, sender, message) {
         enviarMensaje(sock, chatId, 'Debes mencionar al usuario que deseas banear');
         return;
       }
+      const razon = text.split('!ban').pop().trim(); // Extract reason from command
       try {
-        banearUsuario(sock, chatId, sender, mencionados);
+        banearUsuario(sock, chatId, sender, mencionados, razon);
         enviarMensaje(sock, chatId, 'Usuario baneado con éxito');
       } catch (error) {
         console.error('Error al banear usuario:', error);
@@ -387,7 +388,7 @@ function programarEnviosAutomaticos(sock, chatId) {
     const timers = enviosAutomaticos.get(chatId);
     timers.forEach(timer => clearTimeout(timer));
   }
-  
+
   const ahora = new Date();
   // Estadísticas del día
   const horaAleatoriaDia = Math.floor(Math.random() * 3) + 12;
@@ -396,7 +397,7 @@ function programarEnviosAutomaticos(sock, chatId) {
   proximoDia.setHours(horaAleatoriaDia, minutoAleatorioDia, 0, 0);
   if (proximoDia < ahora) proximoDia.setDate(proximoDia.getDate() + 1);
   const milisegundosEsperaDia = proximoDia.getTime() - ahora.getTime();
-  
+
   const timerDia = setTimeout(async () => {
     try {
       console.log(`[AUTO] Enviando estadísticas del día para ${chatId}`);
@@ -409,7 +410,7 @@ function programarEnviosAutomaticos(sock, chatId) {
       console.error('❌ Error enviando estadísticas automáticas:', error);
     }
   }, milisegundosEsperaDia);
-  
+
   // Estadísticas de la noche
   const horaAleatoriaNoche = Math.floor(Math.random() * 3) + 20;
   const minutoAleatorioNoche = Math.floor(Math.random() * 60);
@@ -417,7 +418,7 @@ function programarEnviosAutomaticos(sock, chatId) {
   proximaNoche.setHours(horaAleatoriaNoche, minutoAleatorioNoche, 0, 0);
   if (proximaNoche < ahora) proximaNoche.setDate(proximaNoche.getDate() + 1);
   const milisegundosEsperaNoche = proximaNoche.getTime() - ahora.getTime();
-  
+
   const timerNoche = setTimeout(async () => {
     try {
       console.log(`[AUTO] Enviando estadísticas de la noche para ${chatId}`);
@@ -429,7 +430,7 @@ function programarEnviosAutomaticos(sock, chatId) {
       console.error('❌ Error enviando estadísticas automáticas:', error);
     }
   }, milisegundosEsperaNoche);
-  
+
   enviosAutomaticos.set(chatId, [timerDia, timerNoche]);
   console.log(`[INFO] Próximo envío día: ${proximoDia.toLocaleString()}`);
   console.log(`[INFO] Próximo envío noche: ${proximaNoche.toLocaleString()}`);
