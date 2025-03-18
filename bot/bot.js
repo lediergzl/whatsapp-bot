@@ -436,8 +436,17 @@ function programarEnviosAutomaticos(sock, chatId) {
 }
 
 // ================= Manejo de Conexión y Reconexión =================
+const MAX_RECONNECT_RETRIES = 5;
+const RECONNECT_INTERVAL = 3000;
 let reconnectAttempts = 0;
+let shouldReconnect = true;
+
 async function startBot() {
+    if (reconnectAttempts > MAX_RECONNECT_RETRIES) {
+        console.error('❌ Máximo número de intentos de reconexión alcanzado');
+        process.exit(1);
+    }
+
   const { state, saveCreds } = await useMultiFileAuthState('./auth');
   const sock = makeWASocket({
     auth: state,
@@ -447,15 +456,29 @@ async function startBot() {
 
   sock.ev.on('creds.update', saveCreds);
 
-  sock.ev.on('connection.update', (update) => {
+  sock.ev.on('connection.update', async (update) => {
     const { connection, qr, lastDisconnect } = update;
-    if (qr) console.log("🔄 Nuevo QR recibido.");
+
+    if (qr) {
+        console.log("🔄 Nuevo QR recibido.");
+        // Aquí podrías implementar el guardado del QR o enviarlo a un endpoint
+    }
+
     if (connection === 'close') {
-      const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-      console.log('[INFO] Conexión cerrada. Reconectando:', shouldReconnect);
-      if (shouldReconnect) startBot();
+        const statusCode = lastDisconnect?.error?.output?.statusCode;
+        shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+        console.log(`[INFO] Conexión cerrada. Estado: ${statusCode}`);
+        console.log(`[INFO] Intentando reconexión: ${shouldReconnect}`);
+
+        if (shouldReconnect) {
+            reconnectAttempts++;
+            console.log(`[INFO] Intento de reconexión ${reconnectAttempts} de ${MAX_RECONNECT_RETRIES}`);
+            setTimeout(startBot, RECONNECT_INTERVAL);
+        }
     } else if (connection === 'open') {
-      console.log('[INFO] Bot conectado correctamente.');
+        console.log('[INFO] Bot conectado correctamente.');
+        reconnectAttempts = 0;
     }
   });
 
