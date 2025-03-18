@@ -10,6 +10,7 @@ const { descargarTabla } = require('./imagen.js');
 const { banearUsuario, obtenerTarjeta } = require('./commands.js');
 const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
+const { extraerResultados, enviarResultadosAGrupos } = require('./resultados.js');
 
 // ================= Base de Datos (SQLite) =================
 const db = new sqlite3.Database('./subscriptions.db', (err) => {
@@ -492,6 +493,8 @@ async function startBot() {
     }
   });
 
+  const CANAL_RESULTADOS = "0029VaovEo2KAwEtAc5CP12C@newsletter";
+
   sock.ev.on('messages.upsert', async (msg) => {
     const m = msg.messages[0];
     if (!m.message) return;
@@ -499,6 +502,18 @@ async function startBot() {
     const chatId = m.key.remoteJid;
     const sender = m.key.participant || m.key.remoteJid;
     const text = (m.message.conversation || m.message.extendedTextMessage?.text || "").trim();
+
+    // Monitorear mensajes del canal de resultados
+    if (chatId === CANAL_RESULTADOS) {
+      console.log('[INFO] Mensaje recibido del canal de resultados');
+      const resultados = extraerResultados(text);
+      if (resultados.georgia || resultados.newyork || resultados.florida) {
+        console.log('[INFO] Resultados detectados, enviando a grupos');
+        await enviarResultadosAGrupos(sock, resultados);
+      }
+      return;
+    }
+
     if (!text.startsWith('!')) return;
 
     if (!verificarFrecuenciaUsuario(sender)) {
