@@ -8,9 +8,9 @@ const Bottleneck = require('bottleneck');
 const comandos = require('./commands.js');
 const { descargarTabla } = require('./imagen.js');
 const { banearUsuario, obtenerTarjeta } = require('./commands.js');
+const { extraerResultados, enviarResultadosAGrupos } = require('./resultados.js');
 const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
-const { extraerResultados, enviarResultadosAGrupos } = require('./resultados.js');
 
 // ================= Base de Datos (SQLite) =================
 const db = new sqlite3.Database('./subscriptions.db', (err) => {
