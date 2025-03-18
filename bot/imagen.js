@@ -15,17 +15,28 @@ const opciones = {
 // Ruta del archivo de marcador
 const marcadorPath = './marcador.txt';
 
-// Función para verificar si la tabla ya fue descargada hoy
+// Función para verificar si la tabla ya fue descargada recientemente
 const tablaDescargadaHoy = (estado, tipoSorteo) => {
-  if (fs.existsSync(marcadorPath)) {
-    const marcador = fs.readFileSync(marcadorPath, 'utf-8');
-    const [fecha, tabla, tipo] = marcador.split('|');
+  const fileName = `tabla_${estado}_${tipoSorteo}.png`;
 
-    const fechaHoy = new Date().toISOString().split('T')[0];
-    if (fecha === fechaHoy && tabla === estado && tipo === tipoSorteo) {
-      console.log(`✅ La tabla '${estado}' para el sorteo '${tipoSorteo}' ya fue descargada hoy. Usando el archivo existente.`);
+  if (!fs.existsSync(marcadorPath) || !fs.existsSync(fileName)) {
+    return false;
+  }
+
+  try {
+    const marcador = fs.readFileSync(marcadorPath, 'utf-8');
+    const [fecha, tabla, tipo, timestamp] = marcador.split('|');
+
+    // Verificar si la imagen tiene menos de 30 minutos
+    const tiempoTranscurrido = Date.now() - parseInt(timestamp || 0);
+    const TIEMPO_CACHE = 30 * 60 * 1000; // 30 minutos en milisegundos
+
+    if (tabla === estado && tipo === tipoSorteo && tiempoTranscurrido < TIEMPO_CACHE) {
+      console.log(`✅ Usando caché para tabla '${estado}' sorteo '${tipoSorteo}' (${Math.round(tiempoTranscurrido/1000/60)}min)`);
       return true;
     }
+  } catch (error) {
+    console.error('Error al leer el marcador:', error);
   }
   return false;
 };
@@ -75,7 +86,8 @@ const descargarTabla = async (estado, tipoSorteo) => {
       console.log(`✅ Imagen guardada correctamente como '${fileName}'`);
 
       const fechaHoy = new Date().toISOString().split('T')[0];
-      fs.writeFileSync(marcadorPath, `${fechaHoy}|${estado}|${tipoSorteo}`, 'utf-8');
+      const timestamp = Date.now();
+      fs.writeFileSync(marcadorPath, `${fechaHoy}|${estado}|${tipoSorteo}|${timestamp}`, 'utf-8');
       return fs.readFileSync(fileName); // Retornar el buffer de la imagen
     } else {
       console.log("❌ No se encontró la tabla en la página.");
