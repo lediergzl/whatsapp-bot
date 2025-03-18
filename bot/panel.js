@@ -1,8 +1,9 @@
 const express = require('express');
 const qrcode = require('qrcode');
+const path = require('path');
+const { startBot } = require('./bot');
 const sqlite3 = require('sqlite3').verbose();
 const crypto = require('crypto');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,8 +12,61 @@ app.use(express.static('public'));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// Base de datos
 const db = new sqlite3.Database('./subscriptions.db');
+
+// Create bot_instances table if it doesn't exist
+db.run(`CREATE TABLE IF NOT EXISTS bot_instances (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_phone TEXT UNIQUE,
+  is_active INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+)`, (err) => {
+  if (err) console.error("Error creating table:", err);
+});
+
+
+// API for creating bot instances
+app.post('/api/instance/create', async (req, res) => {
+  const { phone } = req.body;
+
+  try {
+    const sock = await startBot(phone);
+
+    // Generate QR and send it to the client
+    if (sock.authState.creds.registered === false) {
+      const qr = await new Promise((resolve) => {
+        sock.ev.on('connection.update', ({ qr }) => {
+          if (qr) resolve(qr);
+        });
+      });
+
+      const qrImage = await qrcode.toDataURL(qr);
+      //Adding bot instance to db
+      db.run('INSERT INTO bot_instances (user_phone, is_active) VALUES (?, 1)', [phone], function(err){
+        if(err) console.error("Error inserting bot instance:",err);
+      });
+      res.json({ success: true, qr: qrImage });
+    } else {
+      res.json({ success: true, message: 'Bot ya está autenticado' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// API to get bot instance status
+app.get('/api/instance/status/:phone', (req, res) => {
+  const { phone } = req.params;
+
+  db.get('SELECT * FROM bot_instances WHERE user_phone = ?', [phone], (err, row) => {
+    if (err) {
+      res.status(500).json({ success: false, error: err.message });
+    } else {
+      res.json({ success: true, status: row ? row.is_active : false });
+    }
+  });
+});
+
 
 // Configuración de vistas
 app.set('view engine', 'ejs');
@@ -80,15 +134,15 @@ app.post('/api/group/subscribe', async (req, res) => {
 
 function queryDb(sql, params = []) {
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
+    db.all(sql, params, (err, rows) => {
       if (err) reject(err);
-      else resolve(this);
+      else resolve(rows);
     });
   });
 }
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🌐 Panel web corriendo en puerto ${PORT}`);
+  console.log(`Panel running on port ${PORT}`);
 });
 
 module.exports = app;
