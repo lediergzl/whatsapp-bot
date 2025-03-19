@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grupos - Panel de Control</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .nav { margin-bottom: 20px; }
+    .nav a { margin-right: 10px; padding: 8px 16px; background: #4CAF50; color: white; 
+             text-decoration: none; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    .status { padding: 4px 8px; border-radius: 4px; }
+    .active { background: #4CAF50; color: white; }
+    .inactive { background: #f44336; color: white; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a href="/admin">Dashboard</a>
+    <a href="/admin/subscriptions">Suscripciones</a>
+    <a href="/admin/groups">Grupos</a>
+    <a href="/admin/bots">Bots</a>
+    <a href="/admin/settings">Configuración</a>
+    <a href="/logout">Cerrar Sesión</a>
+  </div>
+
+  <h1>Grupos</h1>
+  <table>
+    <tr>
+      <th>Nombre</th>
+      <th>ID del Grupo</th>
+      <th>Estado</th>
+      <th>Fecha de Creación</th>
+    </tr>
+    <% groups.forEach(function(group) { %>
+    <tr>
+      <td><%= group.name %></td>
+      <td><%= group.group_id %></td>
+      <td>
+        <span class="status <%= group.active ? 'active' : 'inactive' %>">
+          <%= group.active ? 'Activo' : 'Inactivo' %>
+        </span>
+      </td>
+      <td><%= new Date(group.created_at).toLocaleDateString() %></td>
+    </tr>
+    <% }); %>
+  </table>
+</body>
+</html>

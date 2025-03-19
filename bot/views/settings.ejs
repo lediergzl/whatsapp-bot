@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Configuración - Panel de Control</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .nav { margin-bottom: 20px; }
+    .nav a { margin-right: 10px; padding: 8px 16px; background: #4CAF50; color: white;
+             text-decoration: none; border-radius: 4px; }
+    .settings-container { max-width: 600px; margin: 0 auto; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 5px; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; }
+    button { padding: 10px 20px; background: #4CAF50; color: white; border: none;
+             border-radius: 4px; cursor: pointer; }
+    .section { margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a href="/admin">Dashboard</a>
+    <a href="/admin/subscriptions">Suscripciones</a>
+    <a href="/admin/groups">Grupos</a>
+    <a href="/admin/bots">Bots</a>
+    <a href="/admin/settings">Configuración</a>
+    <a href="/logout">Cerrar Sesión</a>
+  </div>
+
+  <div class="settings-container">
+    <h1>Configuración</h1>
+    <!-- Formulario de actualización de datos del usuario -->
+    <form action="/admin/settings" method="POST">
+      <div class="form-group">
+        <label>Nombre de Usuario:</label>
+        <input type="text" name="username" value="<%= user?.username %>" required>
+      </div>
+      <div class="form-group">
+        <label>Nueva Contraseña:</label>
+        <input type="password" name="newPassword">
+      </div>
+      <div class="form-group">
+        <label>Confirmar Contraseña:</label>
+        <input type="password" name="confirmPassword">
+      </div>
+      <button type="submit">Guardar Cambios</button>
+    </form>
+
+    <!-- Sección para configurar el grupo fuente -->
+    <div class="section">
+      <h2>Configurar Grupo Fuente</h2>
+      <form action="/api/set-source-group" method="POST">
+        <div class="form-group">
+          <label for="group_link">Enlace del Grupo o Canal:</label>
+          <input type="text" id="group_link" name="group_link" value="<%= groupLink %>" required>
+        </div>
+        <button type="submit">Guardar Grupo Fuente</button>
+      </form>
+    </div>
+
+    <!-- Sección para visualizar el código QR de autenticación -->
+    <div class="section">
+      <h2>Código QR para Autenticación</h2>
+      <% if (qrCode) { %>
+        <img src="<%= qrCode %>" alt="Código QR de autenticación" style="max-width: 100%;">
+      <% } else { %>
+        <p>No hay QR disponible.</p>
+      <% } %>
+    </div>
+  </div>
+</body>
+</html>

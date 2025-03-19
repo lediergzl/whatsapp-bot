@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Suscripciones - Panel de Control</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .nav { margin-bottom: 20px; }
+    .nav a { margin-right: 10px; padding: 8px 16px; background: #4CAF50; color: white; 
+             text-decoration: none; border-radius: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    .status { padding: 4px 8px; border-radius: 4px; }
+    .active { background: #4CAF50; color: white; }
+    .expired { background: #f44336; color: white; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a href="/admin">Dashboard</a>
+    <a href="/admin/subscriptions">Suscripciones</a>
+    <a href="/admin/groups">Grupos</a>
+    <a href="/admin/bots">Bots</a>
+    <a href="/admin/settings">Configuración</a>
+    <a href="/logout">Cerrar Sesión</a>
+  </div>
+
+  <h1>Suscripciones</h1>
+  <table>
+    <tr>
+      <th>Nombre</th>
+      <th>Teléfono</th>
+      <th>Estado</th>
+      <th>Fecha de Registro</th>
+      <th>Fecha de Expiración</th>
+    </tr>
+    <% subscribers.forEach(function(sub) { %>
+    <tr>
+      <td><%= sub.name %></td>
+      <td><%= sub.phone %></td>
+      <td>
+        <span class="status <%= new Date(sub.expiry_date) > new Date() ? 'active' : 'expired' %>">
+          <%= new Date(sub.expiry_date) > new Date() ? 'Activo' : 'Expirado' %>
+        </span>
+      </td>
+      <td><%= new Date(sub.created_at).toLocaleDateString() %></td>
+      <td><%= new Date(sub.expiry_date).toLocaleDateString() %></td>
+    </tr>
+    <% }); %>
+  </table>
+</body>
+</html>

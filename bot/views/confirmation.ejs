@@ -1,0 +1,19 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirmación</title>
+    <style>
+        .container { text-align: center; margin-top: 50px; }
+        img { max-width: 300px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registro Exitoso</h2>
+        <p>Tu código de confirmación es: <%= token %></p>
+        <p>Escanea el siguiente código QR para confirmar tu suscripción:</p>
+        <img src="<%= qrUrl %>" alt="QR Code">
+    </div>
+</body>
+</html>

@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Panel Administrativo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    .nav { 
+      background: #333; 
+      padding: 10px; 
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+    .nav a { 
+      color: white; 
+      text-decoration: none; 
+      margin: 0 10px; 
+      padding: 5px 10px;
+    }
+    .nav a:hover { background: #555; }
+    .content { margin-top: 60px; }
+    .dashboard { display: grid; gap: 20px; }
+    .section { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+    .actions { display: flex; gap: 10px; }
+    .btn { 
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-delete { background: #ff4444; color: white; }
+    .btn-add { background: #44ff44; color: black; }
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <a href="/admin">Dashboard</a>
+    <a href="/admin/subscriptions">Suscripciones</a>
+    <a href="/admin/groups">Grupos</a>
+    <a href="/admin/bots">Bots</a>
+    <a href="/admin/settings">Configuración</a>
+    <a href="/logout">Cerrar Sesión</a>
+  </div>
+
+  <div class="content">
+    <div class="dashboard">
+      <div class="section">
+        <h2>Suscripciones Recientes</h2>
+        <table>
+          <tr>
+            <th>Nombre</th>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Fecha Expiración</th>
+            <th>Acciones</th>
+          </tr>
+          <% subscribers.forEach(function(sub) { %>
+          <tr>
+            <td><%= sub.name %></td>
+            <td><%= sub.phone %></td>
+            <td><%= sub.confirmed ? 'Activo' : 'Pendiente' %></td>
+            <td><%= new Date(sub.expiry_date).toLocaleDateString() %></td>
+            <td class="actions">
+              <button class="btn btn-delete" onclick="deleteSub('<%= sub.id %>')">Eliminar</button>
+            </td>
+          </tr>
+          <% }); %>
+        </table>
+      </div>
+
+      <div class="section">
+        <h2>Instancias de Bot</h2>
+        <button class="btn btn-add" onclick="showAddBotForm()">Agregar Bot</button>
+        <table>
+          <tr>
+            <th>Teléfono</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+          <% botInstances.forEach(function(bot) { %>
+          <tr>
+            <td><%= bot.user_phone %></td>
+            <td><%= bot.is_active ? 'Activo' : 'Inactivo' %></td>
+            <td class="actions">
+              <button class="btn btn-delete" onclick="deleteBot('<%= bot.id %>')">Eliminar</button>
+            </td>
+          </tr>
+          <% }); %>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function deleteSub(id) {
+      if(!confirm('¿Estás seguro de eliminar esta suscripción?')) return;
+      try {
+        const res = await fetch(`/api/subscriptions/delete/${id}`, {
+          method: 'POST'
+        });
+        if(res.ok) location.reload();
+        else alert('Error al eliminar');
+      } catch(err) {
+        alert('Error al eliminar');
+      }
+    }
+
+    async function deleteBot(id) {
+      if(!confirm('¿Estás seguro de eliminar este bot?')) return;
+      try {
+        const res = await fetch(`/api/bot-instances/delete/${id}`, {
+          method: 'POST'
+        });
+        if(res.ok) location.reload();
+        else alert('Error al eliminar');
+      } catch(err) {
+        alert('Error al eliminar');
+      }
+    }
+
+    function showAddBotForm() {
+      const phone = prompt('Ingrese el número de teléfono para el bot:');
+      if(!phone) return;
+      fetch('/api/bot-instances/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ phone })
+      })
+      .then(res => {
+        if(res.ok) location.reload();
+        else alert('Error al crear bot');
+      })
+      .catch(() => alert('Error al crear bot'));
+    }
+  </script>
+</body>
+</html>
